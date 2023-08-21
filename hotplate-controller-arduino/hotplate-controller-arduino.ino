@@ -33,6 +33,7 @@
 
 // Variables
 //uint8_t redraw_counter = 0; //counter used to redraw the screen
+unsigned long millisbtn = 0;
 unsigned long previousMillis = 0;  //counter for every
 double Actualtemp = 0;             //current temperature read
 double Output = 0;
@@ -180,34 +181,36 @@ void loop(void) {
   myPID.Compute();
 
   bool down = Touch_getXY();
+  if (millis() - millisbtn > 100) {
+    millisbtn = millis();
+    for (uint8_t i = 0; i < PROPERTIES_COUNT; i++) {
+      // PreHeat
+      if (properties[i].inc == 0) continue;
+      properties[i].btnp->press(down && properties[i].btnp->contains(pixel_x, pixel_y));
+      properties[i].btnm->press(down && properties[i].btnm->contains(pixel_x, pixel_y));
 
-  for (uint8_t i = 0; i < PROPERTIES_COUNT; i++) {
-    // PreHeat
-    if (properties[i].inc == 0) continue;
-    properties[i].btnp->press(down && properties[i].btnp->contains(pixel_x, pixel_y));
-    properties[i].btnm->press(down && properties[i].btnm->contains(pixel_x, pixel_y));
 
-
-    if (properties[i].btnp->justPressed()) properties[i].btnp->drawButton(true);
-    if (properties[i].btnm->justPressed()) properties[i].btnm->drawButton(true);
-    if (properties[i].btnp->justReleased()) {
-      properties[i].btnp->drawButton();
-      if (*properties[i].value_ptr < properties[i].max) {
-        *properties[i].value_ptr += (properties[i].inc / 10.0);
-        if (properties[i].callback != NULL)
-          properties[i].callback();
-        redrawButtonText(i, false);
-        last_change = 0;
+      if (properties[i].btnp->justPressed()) properties[i].btnp->drawButton(true);
+      if (properties[i].btnm->justPressed()) properties[i].btnm->drawButton(true);
+      if (properties[i].btnp->justReleased()) {
+        properties[i].btnp->drawButton();
+        if (*properties[i].value_ptr < properties[i].max) {
+          *properties[i].value_ptr += (properties[i].inc / 10.0);
+          if (properties[i].callback != NULL)
+            properties[i].callback();
+          redrawButtonText(i, false);
+          last_change = 0;
+        }
       }
-    }
-    if (properties[i].btnm->justReleased()) {
-      properties[i].btnm->drawButton();
-      if (*properties[i].value_ptr > properties[i].min) {
-        *properties[i].value_ptr -= (properties[i].inc / 10.0);
-        if (properties[i].callback != NULL)
-          properties[i].callback();
-        redrawButtonText(i, false);
-        last_change = 0;
+      if (properties[i].btnm->justReleased()) {
+        properties[i].btnm->drawButton();
+        if (*properties[i].value_ptr > properties[i].min) {
+          *properties[i].value_ptr -= (properties[i].inc / 10.0);
+          if (properties[i].callback != NULL)
+            properties[i].callback();
+          redrawButtonText(i, false);
+          last_change = 0;
+        }
       }
     }
   }
